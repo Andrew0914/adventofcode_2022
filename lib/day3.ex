@@ -6,19 +6,23 @@ defmodule Day3 do
   end
 
   defp split_items(rucksack_compartmens)
-       when is_list(rucksack_compartmens) and length(rucksack_compartmens) == 2 do
+       when is_list(rucksack_compartmens) and length(rucksack_compartmens) <= 3 do
     rucksack_compartmens |> Enum.map(&String.graphemes/1)
   end
 
-  defp calculate_duplicated_items([items_a, [head | tail]], repeated_items) do
-    repeated_item = items_a |> Enum.find(&(&1 == head))
-
-    if repeated_item != nil,
-      do: calculate_duplicated_items([items_a, tail], repeated_items ++ [repeated_item]),
-      else: calculate_duplicated_items([items_a, tail], repeated_items)
+  defp calculate_duplicated_items([[head | tail], items_b], repeated_items) do
+    if Enum.find(items_b, &(&1 == head)) != nil,
+      do: calculate_duplicated_items([tail, items_b], repeated_items ++ [head]),
+      else: calculate_duplicated_items([tail, items_b], repeated_items)
   end
 
-  defp calculate_duplicated_items([_items_a, []], repeated_items) do
+  defp calculate_duplicated_items([[head | tail], items_b, items_c], repeated_items) do
+    if Enum.find(items_b, &(&1 == head)) != nil and Enum.find(items_c, &(&1 == head)) != nil,
+      do: calculate_duplicated_items([tail, items_b, items_c], repeated_items ++ [head]),
+      else: calculate_duplicated_items([tail, items_b, items_c], repeated_items)
+  end
+
+  defp calculate_duplicated_items([[] | _tail], repeated_items) do
     repeated_items |> Enum.uniq()
   end
 
@@ -35,7 +39,7 @@ defmodule Day3 do
     end)
   end
 
-  def get_rucksack_reapeated_items_priorities(rucksack) when is_binary(rucksack) do
+  defp get_rucksack_reapeated_items_priorities(rucksack) when is_binary(rucksack) do
     rucksack
     |> split_rucksack_compartments()
     |> split_items()
@@ -48,6 +52,26 @@ defmodule Day3 do
     InputReader.get_input_from_day(3)
     |> InputReader.get_lines_from_input()
     |> Enum.map(&get_rucksack_reapeated_items_priorities(&1))
+    |> Enum.reduce(&(&1 + &2))
+  end
+
+  defp group_three_rucksacks(rucksacks) do
+    rucksacks |> Enum.chunk_every(3)
+  end
+
+  defp get_rucksacks_group_priorities(rucksack_group) do
+    rucksack_group
+    |> split_items()
+    |> calculate_duplicated_items([])
+    |> items_to_priority()
+    |> Enum.reduce(&(&1 + &2))
+  end
+
+  def get_total_rucksacks_groups_priorities() do
+    InputReader.get_input_from_day(3)
+    |> InputReader.get_lines_from_input()
+    |> group_three_rucksacks()
+    |> Enum.map(&get_rucksacks_group_priorities(&1))
     |> Enum.reduce(&(&1 + &2))
   end
 end
